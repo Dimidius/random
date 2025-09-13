@@ -2,6 +2,14 @@ import tkinter as tk
 from PIL import Image, ImageTk, ImageOps
 import random
 import winsound
+import os
+import sys
+
+def resource_path(relative_path):
+    """Get absolute path to resource, works for dev and PyInstaller bundle"""
+    if hasattr(sys, "_MEIPASS"):
+        return os.path.join(sys._MEIPASS, relative_path)
+    return os.path.join(os.path.abspath("."), relative_path)
 
 
 class TriSarahTopsApp:
@@ -18,7 +26,7 @@ class TriSarahTopsApp:
         self._configure_window()
 
         # Load sprites
-        self.image_right = Image.open("TriSarahTops/TriSarahTopsL.png")
+        self.image_right = Image.open(resource_path("files/TriSarahTopsL.png"))
         self.image_left = ImageOps.mirror(self.image_right)
 
         self.pet_width, self.pet_height = self.image_right.size
@@ -138,7 +146,7 @@ class TriSarahTopsApp:
         if self.hunger > 0:
             self.hunger -= 1
             self.update_hunger_label()
-            self.root.after(1000, self.decrease_hunger)  # test: every 1 sec
+            self.root.after(300000, self.decrease_hunger)  # test: every 1 long second
         else:
             if not self.hungry:  # only trigger once
                 self.hungry = True
@@ -146,8 +154,8 @@ class TriSarahTopsApp:
                 self.hide_timer()
                 pet_hungry = tk.Message(self.container, text="Your pet is hungry!", bg="red")
                 pet_hungry.pack()
-                winsound.PlaySound("TriSarahTops/fart-with-reverb.wav",
-                                   winsound.SND_FILENAME | winsound.SND_ASYNC)
+                winsound.PlaySound(resource_path("files/fart-with-reverb.wav"),
+                   winsound.SND_FILENAME | winsound.SND_ASYNC)
                 
     def hide_timer(self):
         self.hunger_label.pack_forget()
@@ -191,6 +199,7 @@ class TriSarahTopsApp:
         self.set_sprite()
         interval = random.randint(self.BEHAVIOR_MIN_MS, self.BEHAVIOR_MAX_MS)
         self.root.after(interval, self.schedule_behavior)
+
 
 if __name__ == "__main__":
     root = tk.Tk()
