@@ -4,6 +4,10 @@ from tkinter import ttk
 class TheMenu:
     def __init__(self, root: tk.Tk):
         self.root = root
+        self.style = ttk.Style()
+        self.style.theme_use('clam')
+        self.style.configure("blue.Horizontal.TProgressbar", foreground='blue', background='blue')
+        self.style.configure("green.Horizontal.TProgressbar", foreground='green', background='green')
         self.root.title("The Menu")
         self.root.geometry("300x200")
         self.root.overrideredirect(True)
@@ -13,45 +17,70 @@ class TheMenu:
 
         # State 
         self.hunger = 100  # initial hunger level
+        self.energy = 100  # initial energy level
 
         self.hungy = ttk.Progressbar(
-            root, orient="horizontal", length=200, mode="determinate", maximum=100
-        )
-        self.hungy.pack(pady=50)
+            root, orient="horizontal", length=200, mode="determinate", maximum=100, style="green.Horizontal.TProgressbar")
+        self.hungy.pack(pady=10, anchor="center")
         self.hungy['value'] = self.hunger
 
-        # Click and drag to move window
-        self.root.bind("<ButtonPress-1>", self.on_press)
-        self.root.bind("<B1-Motion>", self.on_drag)
-        self.root.bind("<ButtonRelease-1>", self.on_release)
-        self.root.bind("<Control-d>", self.invis_bar)
+        self.energy_bar = ttk.Progressbar(
+            root, orient="horizontal", length=200, style="blue.Horizontal.TProgressbar", mode="determinate", maximum=100)
+        self.energy_bar.pack(anchor="center")
+        self.energy_bar['value'] = self.energy
+
+        self.root.bind("<Control-f>", lambda event: self.feed())
+        self.root.bind("<Control-d>", lambda event: self.invis_bar())
+        self.root.bind("<Control-s>", lambda event: self.snacks())
         self.start_x = 0
         self.start_y = 0
 
         self.decrease_hunger()
+        self.energy_bar_stat()
 
-    def on_press(self, event):
-        self.start_x = event.x
-        self.start_y = event.y
-    
-    def on_drag(self, event):
-        new_x = self.root.winfo_x() + event.x - self.start_x
-        new_y = self.root.winfo_y() + event.y - self.start_y
-        self.root.geometry(f"+{new_x}+{new_y}")
+    def center_window_x(self, width, height):
+        screen_width = root.winfo_screenwidth()
+        current_y = root.winfo_y()  # get current Y position
 
-    def on_release(self, event):
-        pass
+        x = (screen_width // 2) - (width // 2)
+        root.geometry(f'{width}x{height}+{x}+{current_y}')
+
+    def feed(self):
+        if self.hunger < 100:
+            self.hunger += 10
+            self.hungy['value'] = self.hunger
+        else:
+            print("Hunger is already full.")
+
+    def snacks(self):
+        if self.hunger < 100:
+            self.hunger += 5
+            self.hungy['value'] = self.hunger
+            self.energy += 20
+            self.energy_bar['value'] = self.energy
+        else:
+            print("Hunger is already full.")
 
     def decrease_hunger(self):
         if self.hunger > 0:
             self.hunger -= 1
             self.hungy['value'] = self.hunger
-            self.root.after(1000, self.decrease_hunger)  
+            self.root.after(1000, self.decrease_hunger)
+
+    def energy_bar_stat(self):
+        if self.energy > 0:
+            self.energy -= 1
+            self.energy_bar['value'] = self.energy
+            self.root.after(750, self.energy_bar_stat)
 
     def invis_bar(self, event):
-        self.hungy.pack_forget()
+        if self.hungy.winfo_ismapped():
+            self.hungy.pack_forget()
+        else:
+            self.hungy.pack(pady=20, anchor="center")
 
 if __name__ == "__main__":
     root = tk.Tk()
     menu = TheMenu(root)
+    TheMenu.center_window_x(root, 300, 200)
     root.mainloop()
