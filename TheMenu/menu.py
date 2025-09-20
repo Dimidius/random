@@ -73,11 +73,13 @@ class TheMenu:
             self.energy_bar['value'] = self.energy
             self.root.after(750, self.energy_bar_stat)
 
-    def invis_bar(self, event):
-        if self.hungy.winfo_ismapped():
+    def invis_bar(self):
+        if self.hungy.winfo_ismapped() & self.energy_bar.winfo_ismapped():
             self.hungy.pack_forget()
+            self.energy_bar.pack_forget()
         else:
-            self.hungy.pack(pady=20, anchor="center")
+            self.hungy.pack(pady=10, anchor="center")
+            self.energy_bar.pack(anchor="center")
 
 if __name__ == "__main__":
     root = tk.Tk()
