@@ -73,9 +73,12 @@ class DeskPet:
 
         tk.Label(self.menu_win, text="Feed Pet", bg="#40414a", fg="white", font=("Arial", 12)).pack(pady=(20, 0))
 
-        tk.Button(self.menu_win, text="Apple: +5 Hunger", command=lambda: self.feed_food(5), width=20, background="#666773").pack(pady=5)
-        tk.Button(self.menu_win, text="Sandwich: +15 Hunger", command=lambda: self.feed_food(15), width=20, background="#666773").pack(pady=5)
-        tk.Button(self.menu_win, text="Pizza: +25 Hunger", command=lambda: self.feed_food(25), width=20, background="#666773").pack(pady=5)
+        butApple = tk.Button(self.menu_win, text="Apple: +5 Hunger", command=lambda: self.feed_food(5), width=20, background="#666773")
+        butApple.grid(row = 0, column = 0, pady=5)
+        butSandwich = tk.Button(self.menu_win, text="Sandwich: +15 Hunger", command=lambda: self.feed_food(15), width=20, background="#666773")
+        butSandwich.grid(row = 1, column = 0, pady=5)
+        butPizza = tk.Button(self.menu_win, text="Pizza: +25 Hunger", command=lambda: self.feed_food(25), width=20, background="#666773")
+        butPizza.grid(row = 0, column = 1, pady=5)
 
 
 
@@ -162,9 +165,6 @@ class DeskPet:
         self.label.bind("<Button-1>", self.start_drag)
         self.label.bind("<B1-Motion>", self.do_drag)
         self.label.bind("<ButtonRelease-1>", self.stop_drag)
-        self.root.bind("<Control-f>", lambda event: self.feed())
-        self.root.bind("<Control-s>", lambda event: self.snacks())
-        self.root.bind("<Control-d>", lambda event: self.toggle_bars())
         self.root.bind("<Button-3>", lambda e: self.root.destroy())
         self.root.bind("<Control-n>", lambda event: self.rename())
         self.root.bind("<Control-t>", lambda event: self.trick())
