@@ -74,11 +74,13 @@ class DeskPet:
         tk.Label(self.menu_win, text="Feed Pet", bg="#40414a", fg="white", font=("Arial", 12)).pack(pady=(20, 0))
 
         butApple = tk.Button(self.menu_win, text="Apple: +5 Hunger", command=lambda: self.feed_food(5), width=20, background="#666773")
-        butApple.grid(row = 0, column = 0, pady=5)
+        butApple.pack(pady=5)
+
         butSandwich = tk.Button(self.menu_win, text="Sandwich: +15 Hunger", command=lambda: self.feed_food(15), width=20, background="#666773")
-        butSandwich.grid(row = 1, column = 0, pady=5)
+        butSandwich.pack(pady=5)
+
         butPizza = tk.Button(self.menu_win, text="Pizza: +25 Hunger", command=lambda: self.feed_food(25), width=20, background="#666773")
-        butPizza.grid(row = 0, column = 1, pady=5)
+        butPizza.pack(pady=5)
 
 
 
@@ -169,6 +171,7 @@ class DeskPet:
         self.root.bind("<Control-n>", lambda event: self.rename())
         self.root.bind("<Control-t>", lambda event: self.trick())
         self.root.bind("<Control-m>", lambda event: self.open_menu())
+        self.root.bind("<Control-s>", lambda event: self.sit())
 
     def set_sprite(self):
         """Update sprite image based on direction and state."""
@@ -203,6 +206,7 @@ class DeskPet:
         if self.sitting:
             self.walking = False
             self.direction = 0
+            self.root.after(3000, lambda: setattr(self, "energy", self.energy + 5))
         else:
             self.schedule_behavior()    
 
