@@ -4,6 +4,16 @@ from PIL import Image, ImageTk, ImageOps
 import random, os, sys, winsound, time
 import json
 import pywinstyles
+from winotify import Notification, audio
+
+# Let's make a button on the menu that opens a trick learning window where you can teach your pet tricks
+# Let's also make a button next to that which opens a trick performing window where you can make your pet perform tricks it has learned
+# Performing tricks costs energy, and learning tricks costs hunger
+# If the pet is too hungry or too low on energy, it can't learn or perform tricks
+# Add mini games to earn money to buy food and snacks for your pet
+# Add a money system to buy food and snacks for your pet (Money is dabloons >:))
+# Mini games: Chrome Dino Game, Tetris, Space Invaders, Snake, Atari Breakout
+# Add a button to the menu that opens a mini game selection window
 
 
 def resource_path(relative_path):
@@ -19,6 +29,11 @@ class DeskPet:
     BEHAVIOR_MIN_MS = 1000
     BEHAVIOR_MAX_MS = 4000
     SAVE_FILE = resource_path("FinalProject/files/pet_state.json")
+
+    pet_hungry = Notification(
+        app_id="DeskPet",
+        title="Your pet is hungry!",
+        msg="Feed your pet to keep it happy and healthy.")
 
     foods = [
         {"name": "Apple", "hunger_restore": 5},
@@ -184,17 +199,18 @@ class DeskPet:
         )
         self.label.pack(side="bottom")
 
-        self.root.update_idletasks()
-        screen_w = self.root.winfo_screenwidth()
-        screen_h = self.root.winfo_screenheight()
-        self.screen_w, self.screen_h = screen_w, screen_h
-        offset_from_bottom = 100  # lift above taskbar, or positive to move lower
+        self.root.update_idletasks() 
+        screen_w = self.root.winfo_screenwidth() 
+        screen_h = self.root.winfo_screenheight() 
+        self.screen_w, self.screen_h = screen_w, screen_h 
+        offset_from_bottom = 0 # lift above taskbar, or positive to move lower 
         self.root.geometry(f"+{screen_w // 2}+{screen_h - self.container_height + offset_from_bottom}")
 
 
         # States
         self.walking = False
         self.sitting = False
+        self.sleeping = False
         self.direction = 0
         self.hunger = 100
         self.energy = 100
@@ -219,7 +235,7 @@ class DeskPet:
         self.label.bind("<ButtonRelease-1>", self.stop_drag)
         self.root.bind("<Button-3>", lambda e: self.on_close())
         self.root.bind("<Control-n>", lambda event: self.rename())
-        self.root.bind("<Control-t>", lambda event: self.trick())
+        # self.root.bind("<Control-t>", lambda event: self.trick())
         self.root.bind("<Control-m>", lambda event: self.open_menu())
         self.root.bind("<Control-s>", lambda event: self.sit())
 
@@ -257,6 +273,43 @@ class DeskPet:
         else:
             self.schedule_behavior()
 
+    def sleep(self):
+        """Put the pet to sleep when energy is low."""
+        if not self.sleeping and self.energy < 10:
+            self.sleeping = True
+            self.walking = False
+            self.sitting = False
+            self.direction = 0
+            self.set_sprite()
+
+            msg = tk.Label(self.container, text="💤 Sleeping...", fg="blue", bg="white")
+            msg.pack()
+            self.root.after(10000, msg.destroy)
+
+            self._regain_energy()
+            print(f"Entering sleep mode at energy={self.energy}")
+
+    def _regain_energy(self):
+        """Regain energy slowly while sleeping."""
+        if not self.sleeping:
+            return
+        if self.energy < 100:
+            self.energy += 2
+            self.update_menu_bars()
+            self.root.after(1000, self._regain_energy)
+            print(f"Regaining energy... {self.energy}")
+        else:
+            self.wake_up()
+
+    def wake_up(self):
+        """Wake up when energy is full."""
+        self.sleeping = False
+        self.walking = True
+        msg = tk.Label(self.container, text="☀️ I'm awake!", fg="green", bg="white")
+        msg.pack()
+        self.root.after(1500, msg.destroy)
+        self.schedule_behavior()
+
     def decrease_hunger(self):
         if self.hunger > 0:
             self.hunger -= 1
@@ -264,17 +317,28 @@ class DeskPet:
         else:
             if self.hunger <= 30:
                 self.hungry = True
-                pet_hungry = tk.Message(self.container, text="I'm hungry!", bg="white", fg="red", font=("Arial", 12))
-                pet_hungry.pack()
-                winsound.PlaySound(resource_path("FinalProject/files/fart-with-reverb.wav"),
-                                   winsound.SND_ASYNC | winsound.SND_FILENAME)
+                self.pet_hungry.show()
 
     def decrease_energy(self):
+        if self.sleeping:
+            return  # don't drain energy while sleeping
+
         if self.energy > 0:
             self.energy -= 1
+            self.update_menu_bars()
             self.root.after(6000, self.decrease_energy)
+        else:
+            self.energy = 0
+
+        # NEW: If energy is critically low, start sleeping
+        if self.energy <= 10 and not self.sleeping:
+            self.sleep()
 
     def animate(self):
+        if self.sleeping:
+            self.root.after(self.ANIMATION_INTERVAL, self.animate)
+            return
+
         if self.walking and self.direction != 0:
             step = self.direction * self.STEP_SIZE
             x = self.root.winfo_x() + step
@@ -291,6 +355,8 @@ class DeskPet:
         self.root.after(self.ANIMATION_INTERVAL, self.animate)
 
     def schedule_behavior(self):
+        if self.sleeping:
+            return
         if self.sitting:
             return
         choice = random.choice(["left", "right", "stop"])
@@ -304,25 +370,27 @@ class DeskPet:
         interval = random.randint(self.BEHAVIOR_MIN_MS, self.BEHAVIOR_MAX_MS)
         self.root.after(interval, self.schedule_behavior)
 
-    def trick(self):
-        if self.energy >= 20:
-            self.energy -= 20
-            self.sitting = True
-            self.walking = False
-            self.backflip()
-            self.root.after(2000, self.sit)
-        else:
-            print("Not enough energy to perform trick.")
+    # def trick(self):
+    #     if self.sleeping:
+    #         return
+    #     if self.energy >= 40:
+    #         self.energy -= 20
+    #         self.sitting = True
+    #         self.walking = False
+    #         self.backflip()
+    #         self.root.after(2000, self.sit)
+    #     else:
+    #         print("Not enough energy to perform trick.")
 
-    def backflip(self, angle=0):
-        if angle <= 180:
-            rotated_image = self.image_right.rotate(angle)
-            self.img = ImageTk.PhotoImage(rotated_image)
-            self.label.config(image=self.img)
-            self.label.image = self.img
-            self.root.after(50, lambda: self.backflip(angle + 30))
-        else:
-            self.set_sprite()
+    # def backflip(self, angle=0):
+    #     if angle <= 180:
+    #         rotated_image = self.image_right.rotate(angle)
+    #         self.img = ImageTk.PhotoImage(rotated_image)
+    #         self.label.config(image=self.img)
+    #         self.label.image = self.img
+    #         self.root.after(50, lambda: self.backflip(angle + 30))
+    #     else:
+    #         self.set_sprite()
 
     def rename(self):
         self.name_label.pack_forget()
