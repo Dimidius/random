@@ -5,6 +5,7 @@ import random, os, sys, winsound, time
 import json
 import pywinstyles
 from winotify import Notification, audio
+from modules import new_tricks as tr
 
 # Let's make a button on the menu that opens a trick learning window where you can teach your pet tricks
 # Let's also make a button next to that which opens a trick performing window where you can make your pet perform tricks it has learned
@@ -120,42 +121,88 @@ class DeskPet:
 
         self.menu_win = tk.Toplevel(self.root)
         self.menu_win.title("Pet Menu")
-        self.menu_win.geometry("400x350")
+        self.menu_win.geometry("600x400")
         self.menu_win.attributes("-topmost", True)
         self.menu_win.config(bg="#40414a")
         pywinstyles.change_header_color(self.menu_win, "#2c2d33")
 
-        tk.Label(self.menu_win, text="Hunger", bg="#40414a", fg="white", font=("Arial", 12)).pack(pady=(20, 0))
-        self.hunger_bar = ttk.Progressbar(self.menu_win, length=200, maximum=100)
-        self.hunger_bar.pack(pady=5)
-        self.hunger_bar['value'] = self.hunger
+        status_frame = tk.Frame(self.menu_win, bg="#40414a")
+        status_frame.pack(pady=(20, 10))
 
-        tk.Label(self.menu_win, text="Energy", bg="#40414a", fg="white", font=("Arial", 12)).pack(pady=(20, 0))
-        self.energy_bar = ttk.Progressbar(self.menu_win, length=200, maximum=100)
-        self.energy_bar.pack(pady=5)
-        self.energy_bar['value'] = self.energy
+        bars_frame = tk.Frame(status_frame, bg="#40414a")
+        bars_frame.grid(row=0, column=0, padx=10)
 
-        tk.Label(self.menu_win, text="Feed Pet", bg="#40414a", fg="white", font=("Arial", 12)).pack(pady=(20, 10))
+        tk.Label(bars_frame, text="Hunger", bg="#40414a", fg="white", font=("Arial", 12)).pack(pady=(0, 2))
+        self.hunger_bar = ttk.Progressbar(bars_frame, length=150, maximum=100)
+        self.hunger_bar.pack(pady=2)
+        self.hunger_bar["value"] = self.hunger
 
-        button_frame = tk.Frame(self.menu_win, bg="#40414a")
-        button_frame.pack(pady=5)
+        tk.Label(bars_frame, text="Energy", bg="#40414a", fg="white", font=("Arial", 12)).pack(pady=(10, 2))
+        self.energy_bar = ttk.Progressbar(bars_frame, length=150, maximum=100)
+        self.energy_bar.pack(pady=2)
+        self.energy_bar["value"] = self.energy
 
-        # Two columns — foods on left, snacks on right
+        learn_frame = tk.Frame(status_frame, bg="#40414a")
+        learn_frame.grid(row=0, column=1, padx=10)
+
+        tk.Label(learn_frame, text="Learn New Tricks", bg="#40414a", fg="white", font=("Arial", 12)).pack()
+        self.learn_button = tk.Button(
+            learn_frame,
+            text="Learn Tricks",
+            command=self.open_tricks_window,
+            width=15,
+            background="#666773",
+            fg="white"
+        )
+        self.learn_button.pack(pady=(10, 0))
+        
+        tk.Label(learn_frame, text="Perform Learned Tricks", bg="#40414a", fg="white", font=("Arial", 12)).pack(pady=(5, 0))
+        self.tricks_btn = tk.Button(
+            learn_frame,
+            text="Tricks",
+            state="disabled",
+            width=15,
+            background="#666773",
+            fg="white"
+        )
+        self.tricks_btn.pack(pady=(10, 0))
+
+        # --- Food and Snack Buttons Section ---
+        food_snack_frame = tk.Frame(self.menu_win, bg="#40414a")
+        food_snack_frame.pack(pady=20)
+
+        # Left: Food buttons
+        food_frame = tk.LabelFrame(food_snack_frame, text="Foods", fg="white", bg="#40414a", font=("Arial", 12, "bold"))
+        food_frame.grid(row=0, column=0, padx=20)
+
         food_buttons = [
-            ("Apple: +5 Hunger", lambda: self.feed_food("Apple")),
-            ("Sandwich: +15 Hunger", lambda: self.feed_food("Sandwich")),
-            ("Pizza: +25 Hunger", lambda: self.feed_food("Pizza"))
-        ]
-        snack_buttons = [
-            ("Giffies: +2H, +5E", lambda: self.feed_snack("Giffies")),
-            ("Choc. Pretzels: +5H, +10E", lambda: self.feed_snack("Chocolate Preztels")),
-            ("Dick: +20 Energy", lambda: self.feed_snack("Dick"))
+            ("Apple (+5 Hunger)", lambda: self.feed_food("Apple")),
+            ("Sandwich (+15 Hunger)", lambda: self.feed_food("Sandwich")),
+            ("Pizza (+25 Hunger)", lambda: self.feed_food("Pizza"))
         ]
 
         for i, (text, cmd) in enumerate(food_buttons):
-            tk.Button(button_frame, text=text, command=cmd, width=20, background="#666773").grid(row=i, column=0, padx=5, pady=5)
+            tk.Button(food_frame, text=text, command=cmd, width=20, background="#666773", fg="white").pack(pady=5)
+
+
+        # Right: Snack buttons
+        snack_frame = tk.LabelFrame(food_snack_frame, text="Snacks", fg="white", bg="#40414a", font=("Arial", 12, "bold"))
+        snack_frame.grid(row=0, column=1, padx=20)
+
+        snack_buttons = [
+            ("Giffies (+2H, +5E)", lambda: self.feed_snack("Giffies")),
+            ("Choc. Pretzels (+5H, +10E)", lambda: self.feed_snack("Chocolate Preztels")),
+            ("Dick (+20 Energy)", lambda: self.feed_snack("Dick"))
+        ]
+
         for i, (text, cmd) in enumerate(snack_buttons):
-            tk.Button(button_frame, text=text, command=cmd, width=22, background="#666773").grid(row=i, column=1, padx=5, pady=5)
+            tk.Button(snack_frame, text=text, command=cmd, width=20, background="#666773", fg="white").pack(pady=5)
+
+    def open_tricks_window(self):
+        # Create one instance of TrickApp if it doesn't exist
+        if not hasattr(self, "tricks_app"):
+            self.tricks_app = tr.TrickApp(self.root)
+        self.tricks_app.tricks_menu()
 
     def update_menu_bars(self):
         if hasattr(self, "menu_win") and self.menu_win.winfo_exists():
