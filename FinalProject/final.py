@@ -6,6 +6,7 @@ import json
 import pywinstyles
 from winotify import Notification, audio
 from modules import new_tricks as tr
+from modules import snake
 
 # Let's make a button on the menu that opens a trick learning window where you can teach your pet tricks
 # Let's also make a button next to that which opens a trick performing window where you can make your pet perform tricks it has learned
@@ -14,7 +15,7 @@ from modules import new_tricks as tr
 # Add mini games to earn money to buy food and snacks for your pet
 # Add a money system to buy food and snacks for your pet (Money is dabloons >:))
 # Mini games: Chrome Dino Game, Tetris, Space Invaders, Snake, Atari Breakout
-# Add a button to the menu that opens a mini game selection window
+
 
 
 def resource_path(relative_path):
@@ -122,7 +123,6 @@ class DeskPet:
         self.menu_win = tk.Toplevel(self.root)
         self.menu_win.title("Pet Menu")
         self.menu_win.geometry("600x400")
-        self.menu_win.attributes("-topmost", True)
         self.menu_win.config(bg="#40414a")
         pywinstyles.change_header_color(self.menu_win, "#2c2d33")
 
@@ -360,7 +360,7 @@ class DeskPet:
     def decrease_hunger(self):
         if self.hunger > 0:
             self.hunger -= 1
-            self.root.after(8000, self.decrease_hunger)
+            self.root.after(120000, self.decrease_hunger)
         else:
             if self.hunger <= 30:
                 self.hungry = True
@@ -373,7 +373,7 @@ class DeskPet:
         if self.energy > 0:
             self.energy -= 1
             self.update_menu_bars()
-            self.root.after(6000, self.decrease_energy)
+            self.root.after(100000, self.decrease_energy)
         else:
             self.energy = 0
 
